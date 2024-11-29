@@ -22,9 +22,10 @@ test('consumer listen', function () {
 
     $consumer = new Consumer(
         highLevelConsumer: $highLevelConsumer,
-        processorData: $processorData,
+        processorData: [$processorData],
         consumerOptions: $consumerOptions,
-        topicName: 'production.domain.fact.models.1'
+        topicNames: ['production.domain.fact.models.1'],
+        consumerName: 'default',
     );
 
     $consumer
@@ -39,5 +40,5 @@ test('consumer listen', function () {
         ->toBe(5100);
 
     $highLevelConsumer->shouldHaveReceived('for', ['default']);
-    $highLevelConsumer->shouldHaveReceived('listen', ['production.domain.fact.models.1', $processorData, $consumerOptions]);
+    $highLevelConsumer->shouldHaveReceived('listen', [['production.domain.fact.models.1'], [$processorData], $consumerOptions]);
 });

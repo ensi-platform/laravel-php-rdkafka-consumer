@@ -11,7 +11,6 @@ use RdKafka\Exception as RdKafkaException;
 use RdKafka\KafkaConsumer;
 use RdKafka\Message;
 use RdKafka\TopicPartition;
-use Throwable;
 
 class HighLevelConsumer
 {
@@ -42,14 +41,14 @@ class HighLevelConsumer
     }
 
     /**
-     * @throws RdKafkaException
-     * @throws Throwable
-     *
-     * @noinspection PhpRedundantCatchClauseInspection
+     * @param array $topicNames
+     * @param ProcessorData[] $processors
+     * @param ConsumerOptions $options
+     * @throws KafkaConsumerException
      */
-    public function listen(string $topicName, ProcessorData $processorData, ConsumerOptions $options): void
+    public function listen(array $topicNames, array $processors, ConsumerOptions $options): void
     {
-        $this->subscribe($topicName);
+        $this->subscribe($topicNames);
 
         [$startTime, $eventsProcessed] = [hrtime(true) / 1e9, 0];
 
@@ -60,7 +59,11 @@ class HighLevelConsumer
                 switch ($message->err) {
 
                     case RD_KAFKA_RESP_ERR_NO_ERROR:
-                        $this->processThroughMiddleware($processorData, $message, $options);
+                        if (!isset($processors[$message->topic_name])) {
+                            throw new KafkaConsumerException("Kafka error: no processor defined for topic '{$message->topic_name}'");
+                        }
+
+                        $this->processThroughMiddleware($processors[$message->topic_name], $message, $options);
                         $this->consumer->commitAsync($message);
                         $eventsProcessed++;
 
@@ -137,19 +140,21 @@ class HighLevelConsumer
         return $this->forceStop;
     }
 
-    protected function subscribe(string $topicName): void
+    protected function subscribe(array $topicNames): void
     {
-        $attempts = 0;
-        do {
-            $topicExists = (bool)$this->getPartitions($topicName);
-            if (!$topicExists) {
-                $this->consumer->newTopic($topicName);
-                sleep(1);
-            }
-            $attempts++;
-        } while (!$topicExists && $attempts < 10);
+        foreach ($topicNames as $topicName) {
+            $attempts = 0;
+            do {
+                $topicExists = (bool)$this->getPartitions($topicName);
+                if (!$topicExists) {
+                    $this->consumer->newTopic($topicName);
+                    sleep(1);
+                }
+                $attempts++;
+            } while (!$topicExists && $attempts < 10);
+        }
 
-        $this->consumer->subscribe([$topicName]);
+        $this->consumer->subscribe($topicNames);
     }
 
     /**

@@ -9,6 +9,7 @@ use Ensi\LaravelPhpRdKafkaConsumer\Exceptions\KafkaConsumerProcessorException;
 use Ensi\LaravelPhpRdKafkaConsumer\HighLevelConsumer;
 use Ensi\LaravelPhpRdKafkaConsumer\Tests\Consumer\KafkaConsumer;
 use Ensi\LaravelPhpRdKafkaConsumer\Tests\Exceptions\OnlyTestingEnvironmentException;
+use Illuminate\Support\Arr;
 use RdKafka\Message;
 use Throwable;
 
@@ -16,13 +17,13 @@ class ConsumerFaker
 {
     protected array $messages = [];
 
-    protected string $topicName;
+    protected array $topicNames;
 
     public function __construct(
-        protected string $topicKey,
+        protected array  $topicKeys,
         protected string $consumerName = 'default'
     ) {
-        $this->topicName = KafkaFacade::topicNameByClient('consumer', $consumerName, $topicKey);
+        $this->topicNames = Arr::map($topicKeys, fn ($topicKey) => KafkaFacade::topicNameByClient('consumer', $consumerName, $topicKey));
     }
 
     public function addMessage(Message $message): self
@@ -48,7 +49,7 @@ class ConsumerFaker
         $this->bind();
 
         (new ConsumerFactory(resolve(HighLevelConsumer::class)))
-            ->build($this->topicKey, $this->consumerName)
+            ->build($this->topicKeys, $this->consumerName)
             ->listen();
     }
 
@@ -66,11 +67,11 @@ class ConsumerFaker
 
     private function makeKafkaManager(): KafkaManager
     {
-        return new KafkaManager(new KafkaConsumer($this->topicName, $this->messages));
+        return new KafkaManager(new KafkaConsumer($this->topicNames, $this->messages));
     }
 
-    public static function new(string $topicKey, string $consumerName = 'default'): self
+    public static function new(array $topicKeys, string $consumerName = 'default'): self
     {
-        return new self($topicKey, $consumerName);
+        return new self($topicKeys, $consumerName);
     }
 }

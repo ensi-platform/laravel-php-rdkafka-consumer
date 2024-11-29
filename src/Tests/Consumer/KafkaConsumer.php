@@ -12,11 +12,11 @@ class KafkaConsumer extends BaseKafkaConsumer
 {
     protected Metadata $metadata;
 
-    public function __construct(string $topicName, protected array $messages = [])
+    public function __construct(array $topicNames, protected array $messages = [])
     {
         parent::__construct($this->makeConf());
 
-        $this->metadata = new Metadata($topicName);
+        $this->metadata = new Metadata($topicNames);
     }
 
     private function makeConf(): Conf
@@ -42,7 +42,7 @@ class KafkaConsumer extends BaseKafkaConsumer
     /**
      * @phpstan-ignore-next-line
      */
-    public function getMetadata($all_topics, $only_topic = null, $timeout_ms): Metadata
+    public function getMetadata($all_topics, $only_topic = null, $timeout_ms = 0): Metadata
     {
         return $this->metadata;
     }
