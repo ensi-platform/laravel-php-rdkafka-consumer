@@ -3,9 +3,11 @@
 use Ensi\LaravelPhpRdKafkaConsumer\Commands\KafkaConsumeCommand;
 use Ensi\LaravelPhpRdKafkaConsumer\Tests\ConsumerFaker;
 use Ensi\LaravelPhpRdKafkaConsumer\Tests\TestConsumer;
-use RdKafka\Message;
+
 use function Pest\Laravel\artisan;
 use function PHPUnit\Framework\assertContains;
+
+use RdKafka\Message;
 
 test('consume command test', function () {
     TestConsumer::fake('test-model');
