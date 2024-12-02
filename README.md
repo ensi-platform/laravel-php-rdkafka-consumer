@@ -166,7 +166,7 @@ use Ensi\LaravelPhpRdKafkaConsumer\Commands\KafkaConsumeCommand;
 use Ensi\LaravelPhpRdKafkaConsumer\Tests\ConsumerFaker;
 use RdKafka\Message;
 
-ConsumerFaker::new('test-model')
+ConsumerFaker::new(['test-model'])
     ->addMessage(new Message())
     ->addMessage(new Message())
     ->consume();

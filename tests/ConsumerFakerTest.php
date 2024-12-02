@@ -8,8 +8,11 @@ use RdKafka\Message;
 test('create and consume kafka manager fake', function () {
     TestConsumer::fake('test-model');
 
-    ConsumerFaker::new('test-model')
-        ->addMessage($message = new Message())
+    $message = new Message();
+    $message->topic_name = 'production.test.fact.test-model.1';
+
+    ConsumerFaker::new(['test-model'])
+        ->addMessage($message)
         ->consume();
 
     TestConsumer::assertMessageConsumed($message);
@@ -18,8 +21,11 @@ test('create and consume kafka manager fake', function () {
 test('bind testing kafka manager with faker consumer', function () {
     TestConsumer::fake('test-model');
 
-    ConsumerFaker::new('test-model')
-        ->addMessage(new Message())
+    $message = new Message();
+    $message->topic_name = 'production.test.fact.test-model.1';
+
+    ConsumerFaker::new(['test-model'])
+        ->addMessage($message)
         ->bind();
 
     expect(resolve(KafkaManager::class))

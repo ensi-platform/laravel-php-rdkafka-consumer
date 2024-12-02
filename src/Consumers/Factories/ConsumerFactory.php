@@ -19,16 +19,24 @@ class ConsumerFactory
     /**
      * @throws KafkaConsumerProcessorException
      */
-    public function build(string $topicKey, string $consumerName = 'default'): Consumer
+    public function build(array $topicKeys, string $consumerName = 'default'): Consumer
     {
-        $processorData = $this->makeProcessorData($topicKey, $consumerName);
-        $consumerOptions = $this->makeConsumerOptions($consumerName, $processorData);
+        $topicNames = [];
+        $processors = [];
+        foreach ($topicKeys as $topicKey) {
+            $topicName = KafkaFacade::topicNameByClient('consumer', $consumerName, $topicKey);
+            $topicNames[] = $topicName;
+            $processors[$topicName] = $this->makeProcessorData($topicKey, $consumerName);
+        }
+
+        $consumerOptions = $this->makeConsumerOptions($consumerName);
 
         return new Consumer(
             highLevelConsumer: $this->highLevelConsumer,
-            processorData: $processorData,
+            processorData: $processors,
             consumerOptions: $consumerOptions,
-            topicName: KafkaFacade::topicNameByClient('consumer', $consumerName, $topicKey)
+            topicNames: $topicNames,
+            consumerName: $consumerName,
         );
     }
 
@@ -38,10 +46,6 @@ class ConsumerFactory
     protected function makeProcessorData(string $topicKey, string $consumerName): ProcessorData
     {
         $processorData = $this->findMatchedProcessor($topicKey, $consumerName);
-
-        if (!class_exists($processorData->class)) {
-            throw new KafkaConsumerProcessorException("Processor class \"$processorData->class\" is not found");
-        }
 
         if (!$processorData->hasValidType()) {
             throw new KafkaConsumerProcessorException("Invalid processor type \"$processorData->type\"," .
@@ -75,12 +79,12 @@ class ConsumerFactory
         throw new KafkaConsumerProcessorException("Processor for topic-key \"$topicKey\" and consumer \"$consumerName\" is not found");
     }
 
-    protected function makeConsumerOptions(string $consumerName, ProcessorData $processorData): ConsumerOptions
+    protected function makeConsumerOptions(string $consumerName): ConsumerOptions
     {
         $consumerPackageOptions = config('kafka-consumer.consumer_options.' . $consumerName, []);
 
         return new ConsumerOptions(
-            consumeTimeout: $consumerPackageOptions['consume_timeout'] ?? $processorData->consumeTimeout,
+            consumeTimeout: $consumerPackageOptions['consume_timeout'] ?? 20000,
             middleware: $this->collectMiddleware($consumerPackageOptions['middleware'] ?? []),
         );
     }

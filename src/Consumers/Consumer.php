@@ -5,22 +5,28 @@ namespace Ensi\LaravelPhpRdKafkaConsumer\Consumers;
 use Ensi\LaravelPhpRdKafkaConsumer\ConsumerOptions;
 use Ensi\LaravelPhpRdKafkaConsumer\HighLevelConsumer;
 use Ensi\LaravelPhpRdKafkaConsumer\ProcessorData;
-use RdKafka\Exception;
 use Throwable;
 
 class Consumer
 {
+    /**
+     * @param HighLevelConsumer $highLevelConsumer
+     * @param ProcessorData[] $processorData
+     * @param ConsumerOptions $consumerOptions
+     * @param array $topicNames
+     */
     public function __construct(
         protected HighLevelConsumer $highLevelConsumer,
-        protected ProcessorData $processorData,
+        protected array $processorData,
         protected ConsumerOptions $consumerOptions,
-        protected string $topicName
+        protected array $topicNames,
+        protected string $consumerName,
     ) {
     }
 
-    public function getTopicName(): string
+    public function getTopicNames(): array
     {
-        return $this->topicName;
+        return $this->topicNames;
     }
 
     public function setMaxTime(int $maxTime = 0): self
@@ -42,24 +48,18 @@ class Consumer
         $this->highLevelConsumer->forceStop();
     }
 
-    public function getProcessorData(): ProcessorData
-    {
-        return $this->processorData;
-    }
-
     public function getConsumerOptions(): ConsumerOptions
     {
         return $this->consumerOptions;
     }
 
     /**
-     * @throws Exception
      * @throws Throwable
      */
     public function listen(): void
     {
         $this->highLevelConsumer
-            ->for($this->processorData->consumer)
-            ->listen($this->topicName, $this->processorData, $this->consumerOptions);
+            ->for($this->consumerName)
+            ->listen($this->topicNames, $this->processorData, $this->consumerOptions);
     }
 }

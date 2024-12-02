@@ -18,7 +18,7 @@ class KafkaConsumeCommand extends Command implements SignalableCommandInterface
      * The name and signature of the console command.
      */
     protected $signature = 'kafka:consume
-                            {topic-key : The key of a topic in the kafka.topics list}
+                            {topic-key : The key of a topic in the kafka.topics list, can accept multiple keys delimited by comma}
                             {consumer=default : The name of the consumer}
                             {--max-events=0 : The number of events to consume before stopping}
                             {--max-time=0 : The maximum number of seconds the worker should run}
@@ -82,14 +82,18 @@ class KafkaConsumeCommand extends Command implements SignalableCommandInterface
      */
     public function handle(ConsumerFactory $consumerFactory): int
     {
+        $topicKeys = explode(',', $this->getTopicKey());
+
         try {
             $this->consumer = $consumerFactory
-                ->build($this->getTopicKey(), $this->getConsumerName())
+                ->build($topicKeys, $this->getConsumerName())
                 ->setMaxEvents($this->getMaxEvents())
                 ->setMaxTime($this->getMaxTime());
 
-            $this->info("Start listening to topic: \"{$this->getTopicKey()}\"" .
-                " ({$this->consumer->getTopicName()}), consumer \"{$this->getConsumerName()}\"");
+            foreach ($this->consumer->getTopicNames() as $topicName) {
+                $this->info("Start listening to topic:" .
+                    " {$topicName}, consumer \"{$this->getConsumerName()}\"");
+            }
 
             $this->consumer->listen();
         } catch (Throwable $exception) {
