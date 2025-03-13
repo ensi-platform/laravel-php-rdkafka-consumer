@@ -10,7 +10,7 @@
   </logging>
   <source>
     <include>
-      <directory suffix="Test.php">./src</directory>
+      <directory>./src</directory>
     </include>
   </source>
 </phpunit>
