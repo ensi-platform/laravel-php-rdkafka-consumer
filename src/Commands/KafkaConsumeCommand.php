@@ -74,7 +74,7 @@ class KafkaConsumeCommand extends Command implements SignalableCommandInterface
             $this->consumer->forceStop();
         }
 
-        return $previousExitCode;
+        return false;
     }
 
     /**
